@@ -118,8 +118,8 @@ fn window_conf() -> Conf {
     Conf {
         window_title: "Window name".to_owned(),
         fullscreen: false,
-        window_width: 512,
-        window_height: 512,
+        window_width: 256,
+        window_height: 256,
         ..Default::default()
     }
 }
