@@ -39,6 +39,7 @@ async fn main() {
             } else {
                 RED
             };
+
             draw_rectangle(
                 i as f32 * screen_width() / NUM_RAYS as f32,
                 screen_height() - 32.,

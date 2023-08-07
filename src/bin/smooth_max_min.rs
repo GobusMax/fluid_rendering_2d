@@ -1,4 +1,4 @@
-use fluid_rendering_2d::{boltzman, log_sum_exp, mellowmax, random_vec};
+use fluid_rendering_2d::{boltzman, log_sum_exp, log_sum_exp_grad, mellowmax, random_vec};
 use macroquad::prelude::*;
 
 const RADIUS: f32 = 4.;
@@ -64,19 +64,29 @@ async fn main() {
 
         for x in 0..screen_width() as usize {
             for y in 0..screen_height() as usize {
-                let diff: Vec<_> = points
-                    .iter()
-                    .map(|v| v.distance(dvec2(x as _, y as _)))
-                    .collect();
+                let pos = dvec2(x as f64, y as f64);
+                let diff: Vec<_> = points.iter().map(|v| *v - pos).collect();
+                let distances: Vec<_> = diff.iter().map(|v| v.length()).collect();
 
                 let res = match smooth_function {
-                    MinFunction::Boltzman => boltzman(&diff, alpha),
-                    MinFunction::LogSumExp => log_sum_exp(&diff, alpha),
-                    MinFunction::Mellowmax => mellowmax(&diff, alpha),
+                    MinFunction::Boltzman => boltzman(&distances, alpha),
+                    MinFunction::LogSumExp => log_sum_exp(&distances, alpha),
+                    MinFunction::Mellowmax => mellowmax(&distances, alpha),
                 };
-
+                let grad = log_sum_exp_grad(&diff, alpha);
                 if res <= min_distance {
                     image.set_pixel(x as _, y as _, GREEN);
+                } else {
+                    image.set_pixel(
+                        x as _,
+                        y as _,
+                        Color {
+                            r: grad.x as _,
+                            g: grad.y as _,
+                            b: -grad.x as _,
+                            a: 1.,
+                        },
+                    );
                 }
             }
         }
@@ -100,6 +110,7 @@ async fn main() {
             16.,
             BLACK,
         );
+        println!("{}", 1. / get_frame_time());
         next_frame().await
     }
 }
@@ -107,8 +118,8 @@ fn window_conf() -> Conf {
     Conf {
         window_title: "Window name".to_owned(),
         fullscreen: false,
-        window_width: 256,
-        window_height: 256,
+        window_width: 512,
+        window_height: 512,
         ..Default::default()
     }
 }
